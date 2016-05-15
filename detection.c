@@ -14,8 +14,9 @@ int main (int argc, char* argv[])
 	//FILE *fin;
 	controlStruct control;
 	acfStruct acfStructure;
-	//noiseStruct noiseStructure;
+	noiseStruct noiseStructure;
 
+	float signal, noise;
 	char fname[1024];   // read in parameter file
 
 	//char oname[1024];   // output file name
@@ -89,9 +90,10 @@ int main (int argc, char* argv[])
 				calculateScintScale (&acfStructure, &control);
 					
 				// simulate dynamic spectra
-				calculateNDynSpec (&acfStructure, &control);
+				signal = calculateNDynSpec (&acfStructure, &control);
+				noise = calNoise (&noiseStructure, &control);
 				fflush (stdout);
-				//printf ("%d %lf\n", control.nchan, control.cFlux);
+				printf ("%d %f %f\n", control.nchan, signal, noise);
 				//fprintf (fin, "%lf %lf %lf %f\n", tdiff, fdiff, control.cFlux, acfStructure.probability);
 		
 				deallocateMemory (&acfStructure);

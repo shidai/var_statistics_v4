@@ -90,7 +90,7 @@ void allocateMemory (acfStruct *acfStructure);
 int simDynSpec (acfStruct *acfStructure, long seed);
 int winDynSpec (acfStruct *acfStructure, long seed);
 int calculateScintScale (acfStruct *acfStructure, controlStruct *control);
-int calculateNDynSpec (acfStruct *acfStructure, controlStruct *control);
+float calculateNDynSpec (acfStruct *acfStructure, controlStruct *control);
 void preAllocateMemory (acfStruct *acfStructure);
 //void preAllocateMemory (acfStruct *acfStructure, controlStruct *control);
 float find_peak_value (int n, float *s);
@@ -112,30 +112,32 @@ int histogram (float *data, int n, float *x, float *val, float low, float up, in
 float find_max_value (int n, float *s);
 float find_min_value (int n, float *s);
 
-int calNoise (noiseStruct *noiseStructure, controlStruct *control);
+float calNoise (noiseStruct *noiseStructure, controlStruct *control);
 int simNoise (noiseStruct *noiseStructure, long seed);
 int calThreshold (noiseStruct *noiseStructure, float *var_n);
 
 void readDiss (char *Tname, char *Fname, double *tdiss, double *fdiss);
 int readDissNum (char *Tname);
 
-int calNoise (noiseStruct *noiseStructure, controlStruct *control)
+float calNoise (noiseStruct *noiseStructure, controlStruct *control)
 {
 	int nchn, nsubint;
 	long seed;
 	int i;
-	int n = 10*control->n;
+	int n = control->n;
 
+	float std_n;
 	float *var_n;
-	var_n = (float*)malloc(sizeof(float)*n);
+	var_n = (float *)malloc(sizeof(float)*n);
 
-	noiseStructure->n = 10*control->n; 
-	noiseStructure->whiteLevel = control->whiteLevel; // mJy
+	noiseStructure->n = control->n; 
+
 	noiseStructure->nchn = control->nchan; 
 	noiseStructure->nsubint = control->nsub; 
-
 	nchn = noiseStructure->nchn;
 	nsubint = noiseStructure->nsubint;
+
+	noiseStructure->whiteLevel = sqrt(nchn*nsubint)*control->whiteLevel; // mJy
 
 	// allocate memory
 	noiseStructure->noisePlot = (float *)malloc(sizeof(float)*nsubint*nchn);
@@ -149,13 +151,14 @@ int calNoise (noiseStruct *noiseStructure, controlStruct *control)
 		var_n[i] = variance (noiseStructure->noisePlot, nsubint*nchn);
 	}
 
-	calThreshold (noiseStructure, var_n);
+	std_n = sqrt(variance(var_n, n));
+	//calThreshold (noiseStructure, var_n);
 
 	// deallocate memory
 	free(noiseStructure->noisePlot);
 	free(var_n);
 
-	return 0;
+	return std_n;
 }
 
 int calThreshold (noiseStruct *noiseStructure, float *var_n)
@@ -192,7 +195,7 @@ int calThreshold (noiseStruct *noiseStructure, float *var_n)
 	return 0;
 }
 
-int calculateNDynSpec (acfStruct *acfStructure, controlStruct *control)
+float calculateNDynSpec (acfStruct *acfStructure, controlStruct *control)
 {
 	long seed;
 	int i;
@@ -221,9 +224,10 @@ int calculateNDynSpec (acfStruct *acfStructure, controlStruct *control)
 		meanVar += variance (acfStructure->dynPlot, nsub*nchan);
 
 	}
-	printf ("%d %f\n", nchan, meanVar/n);
+	meanVar = meanVar/n;
+	//printf ("%d %f\n", nchan, meanVar/n);
 
-	return 0;
+	return meanVar;
 }
 
 int calculateScintScale (acfStruct *acfStructure, controlStruct *control)
